@@ -20,7 +20,7 @@ loadSprite('pipe-top-right', 'hj2GK4n.png')
 loadSprite('pipe-bottom-left', 'c1cYSbt.png')
 loadSprite('pipe-bottom-right', 'nqQ79eI.png')
 
-scene("game", () => {
+scene("game", ({ level, score }) => {
     layers(['bg', 'obj', 'ui'], 'obj')
 
     const map = [
@@ -50,22 +50,30 @@ scene("game", () => {
 
         '(': [sprite('pipe-bottom-left'), solid(), scale(0.5)],
         ')': [sprite('pipe-bottom-right'), solid(), scale(0.5)],
-        '-': [sprite('pipe-top-left'), solid(), scale(0.5)],
+        '-': [sprite('pipe-top-left'), solid(), scale(0.5), 'pipe'],
         '+': [sprite('pipe-top-right'), solid(), scale(0.5)],
     }
 
     const gameLevel = addLevel(map, levelCfg)
 
+    const MOVE_SPEED = 120
+    const ENEMY_SPEED = 20
+    const JUMP_FORCE = 360
+    const BIG_JUMP_FORCE = 540
+    const FALL_DEATH = 400
+    let isJump = true
+    let CURRENT_JUMP_FORCE = JUMP_FORCE
+
     const scoreLabel = add([
         text("Score: " + 0),
-        pos(30, 6),
+        pos(80, 6),
         layer('ui'),
         {
             value: 0,
         }
     ])
 
-    add([text('level ' + 'test', pos(4, 6))])
+    add([text('level ' + parseInt(level + 1)), pos(4, 6)])
 
     function big() {
         let timer = 0
@@ -106,6 +114,18 @@ scene("game", () => {
         origin('bot'),
     ])
 
+    action('dangerous', (d) => {
+        d.move(-ENEMY_SPEED, 0)
+    })
+
+    player.collides('dangerous', (d) => {
+        if (isJump) {
+            destroy(d)
+        } else {
+            go('lose', { score: scoreLabel.value })
+        }
+    })
+
     action('mushroom', (m) => {
         m.move(20, 0)
     })
@@ -124,6 +144,29 @@ scene("game", () => {
         }
     })
 
+    player.action(() => {
+        if (player.grounded()) {
+            isJump = false
+        }
+    })
+
+    player.action(() => {
+        camPos(player.pos)
+        if (player.pos.y >= FALL_DEATH) {
+            go('lose', { score: scoreLabel.value })
+        }
+    })
+
+
+    player.collides('pipe', () => {
+        keyPress('down', () => {
+            go('game', {
+                level: (level + 1),
+                score: scoreLabel.value
+            })
+        })
+    })
+
     player.collides('mushroom', (m) => {
         destroy(m)
         player.biggify(4)
@@ -136,15 +179,6 @@ scene("game", () => {
             scoreLabel.text = "Score: " + scoreLabel.value
     })
 
-    player.collides('dangerous', (d) => {
-        go('lose', { score: scoreLabel.value })
-    })
-
-    const MOVE_SPEED = 120
-    const JUMP_FORCE = 360
-    const BIG_JUMP_FORCE = 540
-    let CURRENT_JUMP_FORCE = JUMP_FORCE
-
     keyDown('left', () => {
         player.move(-MOVE_SPEED, 0)
     })
@@ -155,12 +189,14 @@ scene("game", () => {
 
     keyPress('space', () => {
         if (player.grounded()) {
+            isJump = true
             player.jump(CURRENT_JUMP_FORCE)
         }
     })
+
     scene('lose', ({ score }) => {
-        add([text(score, 32), origin('center'), pos(width() / 2, height(), 2)])
+        add([text("You lose, your score: " + score, 24), origin('center'), pos(width() / 2, height() / 2)])
     })
 })
 
-start("game")
+start("game", { level: 0, score: 0 })
