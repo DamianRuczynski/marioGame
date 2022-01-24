@@ -23,17 +23,31 @@ loadSprite('pipe-bottom-right', 'nqQ79eI.png')
 scene("game", ({ level, score }) => {
     layers(['bg', 'obj', 'ui'], 'obj')
 
-    const map = [
-        '                                                                   ',
-        '                                                                   ',
-        '                                                                   ',
-        '                                                                   ',
-        '                                                                   ',
-        '            %  =*=     %                                           ',
-        '                                                                   ',
-        '                                           -+                      ',
-        '                              ^     ^      ()                      ',
-        '=============================================   ===================',
+    const maps = [
+        [
+            '                                                                   ',
+            '                                                                   ',
+            '                                                                   ',
+            '                                                                   ',
+            '                                                                   ',
+            '            %  =*=     %                                           ',
+            '                                                                   ',
+            '                                           -+                      ',
+            '                              ^     ^      ()                      ',
+            '=============================================   ===================',
+        ],
+        [
+            '                                                                   ',
+            '                                                                   ',
+            '                                                                   ',
+            '                                                                   ',
+            '                                                                   ',
+            '      %     %  =*=     %              %  =*=     %                 ',
+            '                                                                   ',
+            '                                                               -+  ',
+            '                     ^^       ^     ^                          ()  ',
+            '=============================================   ===================',
+        ],
     ]
     const levelCfg = {
         width: 20,
@@ -54,7 +68,7 @@ scene("game", ({ level, score }) => {
         '+': [sprite('pipe-top-right'), solid(), scale(0.5)],
     }
 
-    const gameLevel = addLevel(map, levelCfg)
+    const gameLevel = addLevel(maps[level], levelCfg)
 
     const MOVE_SPEED = 120
     const ENEMY_SPEED = 20
@@ -161,7 +175,7 @@ scene("game", ({ level, score }) => {
     player.collides('pipe', () => {
         keyPress('down', () => {
             go('game', {
-                level: (level + 1),
+                level: (level + 1) % maps.length,
                 score: scoreLabel.value
             })
         })
@@ -196,6 +210,10 @@ scene("game", ({ level, score }) => {
 
     scene('lose', ({ score }) => {
         add([text("You lose, your score: " + score, 24), origin('center'), pos(width() / 2, height() / 2)])
+    })
+
+    scene('finish', ({ score }) => {
+        add([text("You win, your score: " + score, 24), origin('center'), pos(width() / 2, height() / 2)])
     })
 })
 
